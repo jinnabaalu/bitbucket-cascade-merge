@@ -83,7 +83,7 @@ func worker(event <-chan PullRequestEvent) {
 			if err != nil {
 				log.Printf("could not create a pull request %s to %s on %s. Caused by %s", state.Source, state.Target, e.Repository.Name, err)
 			} else {
-				log.Printf("Error merging cascade from : %s to %s. Caused by %s", state.Source, state.Target, err)
+				log.Printf("Error merging cascade from : %s to %s. Caused by %s", state.Source, state.Target, state)
 			}
 		}
 	}
