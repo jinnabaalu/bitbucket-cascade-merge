@@ -296,7 +296,6 @@ func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cas
 		shorthand := branch.Shorthand()
 		branchName := strings.TrimPrefix(shorthand, DefaultRemoteName+"/")
 		log.Printf("Cascade Branch Name: %s", branchName)
-		log.Printf("Development Name: %s", options.DevelopmentName)
 		if branchName == options.DevelopmentName || strings.HasPrefix(branchName, options.ReleasePrefix) {
 			cascade.Append(branchName)
 		}
@@ -305,8 +304,24 @@ func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cas
 	log.Printf("Cascade List Before  Slice: %+v", cascade)
 	log.Printf("Start Branch %s", startBranch)
 	cascade.Slice(startBranch)
-	log.Printf("Cascade List After Slice : %+v", cascade)
+	// Check if DefaultMaster exists in the cascade list
+	masterIndex := -1
+	for i, branch := range cascade.Branches {
+		if branch == DefaultMaster {
+			masterIndex = i
+			break
+		}
+	}
 
+	// Move DefaultMaster to the end if it exists
+	if masterIndex != -1 {
+		cascade.Branches = append(append(cascade.Branches[:masterIndex], cascade.Branches[masterIndex+1:]...), DefaultMaster)
+	} else {
+		// Add DefaultMaster if not already in the list
+		cascade.Append(DefaultMaster)
+	}
+
+	log.Printf("Cascade List After Slice : %+v", cascade)
 	return &cascade, nil
 }
 
