@@ -69,6 +69,7 @@ func worker(event <-chan PullRequestEvent) {
 
 		// cascade merge the pull request
 		state := c.CascadeMerge(e.PullRequest.Destination.Branch.Name, opts)
+		// log.Printf("Current State %s", state)
 		if state != nil {
 
 			// create a new pull request when cascade fails

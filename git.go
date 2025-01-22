@@ -3,9 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/libgit2/git2go/v34"
+	"log"
 	"strings"
 	"time"
+
+	git "github.com/libgit2/git2go/v34"
 )
 
 const (
@@ -304,6 +306,7 @@ func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cas
 
 func (c *Client) MergeBranches(sourceBranchName string, destinationBranchName string) error {
 	// assuming that these two branches are local already
+	log.Printf("Merging from Source: %s branch to Target: %s", sourceBranchName, destinationBranchName)
 	sourceBranch, err := c.Repository.LookupBranch(sourceBranchName, git.BranchLocal)
 	if err != nil {
 		return err
