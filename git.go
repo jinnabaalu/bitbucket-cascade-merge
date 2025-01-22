@@ -55,6 +55,7 @@ func (c *Client) CascadeMerge(branchName string, options *CascadeOptions) *Casca
 	}
 
 	cascade, err := c.BuildCascade(options, branchName)
+	log.Printf("Cascade List: %+v", cascade)
 	if err != nil {
 		return &CascadeMergeState{error: err}
 	}
@@ -226,6 +227,7 @@ func (c *Client) Checkout(branchName string) error {
 
 func (c *Client) Push(branchName string) error {
 	remote, err := c.Repository.Remotes.Lookup(DefaultRemoteName)
+
 	if err != nil {
 		return err
 	}
@@ -293,6 +295,7 @@ func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cas
 	iterator.ForEach(func(branch *git.Branch, branchType git.BranchType) error {
 		shorthand := branch.Shorthand()
 		branchName := strings.TrimPrefix(shorthand, DefaultRemoteName+"/")
+		log.Printf("Cascade Branch Name: %s", branchName)
 		if branchName == options.DevelopmentName || strings.HasPrefix(branchName, options.ReleasePrefix) {
 			cascade.Append(branchName)
 		}
@@ -414,7 +417,7 @@ func (c *Client) MergeBranches(sourceBranchName string, destinationBranchName st
 	if err != nil {
 		return err
 	}
-
+	log.Printf("Merging from Source: %s branch to Target: %s is successful", sourceBranchName, destinationBranchName)
 	return nil
 }
 
