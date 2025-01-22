@@ -1,11 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ktrysmt/go-bitbucket"
 )
 
+type PullRequestResponse struct {
+	ID    int `json:"id"`
+	Links struct {
+		HTML struct {
+			Href string `json:"href"`
+		} `json:"html"`
+	} `json:"links"`
+}
 type Bitbucket struct {
 	Client   *bitbucket.Client
 	Owner    string
@@ -79,7 +88,7 @@ func (c *Bitbucket) GetCascadeOptions(owner, repo string) (*CascadeOptions, erro
 	return nil, fmt.Errorf("cannot inspect branching model on %s", repo)
 }
 
-func (c *Bitbucket) CreatePullRequest(title, description, sourceBranch, destinationBranch string) error {
+func (c *Bitbucket) CreatePullRequest(title, description, sourceBranch, destinationBranch string) (*PullRequestResponse, error) {
 	opt := &bitbucket.PullRequestsOptions{
 		Owner:             c.Owner,
 		RepoSlug:          c.RepoSlug,
@@ -89,9 +98,23 @@ func (c *Bitbucket) CreatePullRequest(title, description, sourceBranch, destinat
 		DestinationBranch: destinationBranch,
 	}
 
-	_, err := c.Client.Repositories.PullRequests.Create(opt)
+	resp, err := c.Client.Repositories.PullRequests.Create(opt)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	// Convert the interface{} response to JSON bytes
+	responseBytes, err := json.Marshal(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the JSON bytes into the PullRequestResponse struct
+	var prResponse PullRequestResponse
+	err = json.Unmarshal(responseBytes, &prResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &prResponse, nil
 }
