@@ -73,6 +73,7 @@ func worker(event <-chan PullRequestEvent) {
 		if state != nil {
 
 			// create a new pull request when cascade fails
+
 			err := api.CreatePullRequest(
 				"Automatic merge failure",
 				"There was a merge conflict automatically merging this branch",
@@ -80,9 +81,10 @@ func worker(event <-chan PullRequestEvent) {
 				state.Target)
 
 			if err != nil {
-				log.Printf("could not create a pull request %s to %s on %s", state.Source, state.Target, e.Repository.Name)
+				log.Printf("could not create a pull request %s to %s on %s. Caused by %s", state.Source, state.Target, e.Repository.Name, err)
+			} else {
+				log.Printf("Error merging cascade from : %s to %s. Caused by %s", state.Source, state.Target, err)
 			}
 		}
-
 	}
 }
