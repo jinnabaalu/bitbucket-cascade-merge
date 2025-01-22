@@ -296,13 +296,16 @@ func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cas
 		shorthand := branch.Shorthand()
 		branchName := strings.TrimPrefix(shorthand, DefaultRemoteName+"/")
 		log.Printf("Cascade Branch Name: %s", branchName)
+		log.Printf("Development Name: %s", options.DevelopmentName)
 		if branchName == options.DevelopmentName || strings.HasPrefix(branchName, options.ReleasePrefix) {
 			cascade.Append(branchName)
 		}
 		return nil
 	})
-
+	log.Printf("Cascade List Before  Slice: %+v", cascade)
+	log.Printf("Start Branch %s", startBranch)
 	cascade.Slice(startBranch)
+	log.Printf("Cascade List After Slice : %+v", cascade)
 
 	return &cascade, nil
 }
