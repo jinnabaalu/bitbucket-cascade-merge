@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -281,6 +283,28 @@ func (c *Client) Reset(branchName string) error {
 	return nil
 }
 
+// compareVersions compares two version strings (e.g., "1.2.3" and "1.10.0").
+// It returns -1 if v1 < v2, 1 if v1 > v2, and 0 if they are equal.
+func compareVersions(v1, v2 string) int {
+	v1Parts := strings.Split(v1, ".")
+	v2Parts := strings.Split(v2, ".")
+	for i := 0; i < len(v1Parts) && i < len(v2Parts); i++ {
+		n1, _ := strconv.Atoi(v1Parts[i])
+		n2, _ := strconv.Atoi(v2Parts[i])
+		if n1 < n2 {
+			return -1
+		} else if n1 > n2 {
+			return 1
+		}
+	}
+	if len(v1Parts) < len(v2Parts) {
+		return -1
+	} else if len(v1Parts) > len(v2Parts) {
+		return 1
+	}
+	return 0
+}
+
 func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cascade, error) {
 	cascade := Cascade{
 		Branches: make([]string, 0),
@@ -292,18 +316,34 @@ func (c *Client) BuildCascade(options *CascadeOptions, startBranch string) (*Cas
 		return nil, err
 	}
 
+	// Collect release branches and others
+	var releaseBranches []string
 	iterator.ForEach(func(branch *git.Branch, branchType git.BranchType) error {
 		shorthand := branch.Shorthand()
 		branchName := strings.TrimPrefix(shorthand, DefaultRemoteName+"/")
 		log.Printf("Cascade Branch Name: %s", branchName)
-		if branchName == options.DevelopmentName || strings.HasPrefix(branchName, options.ReleasePrefix) {
+		if branchName == options.DevelopmentName {
 			cascade.Append(branchName)
+		} else if strings.HasPrefix(branchName, options.ReleasePrefix) {
+			releaseBranches = append(releaseBranches, branchName)
 		}
 		return nil
 	})
-	log.Printf("Cascade List Before  Slice: %+v", cascade)
+
+	// Sort release branches by version
+	sort.Slice(releaseBranches, func(i, j int) bool {
+		v1 := strings.TrimPrefix(releaseBranches[i], options.ReleasePrefix)
+		v2 := strings.TrimPrefix(releaseBranches[j], options.ReleasePrefix)
+		return compareVersions(v1, v2) < 0
+	})
+
+	// Add sorted release branches to the cascade
+	cascade.Branches = append(cascade.Branches, releaseBranches...)
+
+	log.Printf("Cascade List Before Slice: %+v", cascade)
 	log.Printf("Start Branch %s", startBranch)
 	cascade.Slice(startBranch)
+
 	// Check if DefaultMaster exists in the cascade list
 	masterIndex := -1
 	for i, branch := range cascade.Branches {
